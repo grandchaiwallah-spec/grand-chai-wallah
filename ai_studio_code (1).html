@@ -1,0 +1,587 @@
+<!DOCTYPE html>
+<html lang="en" class="h-full bg-slate-950">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Grand Chai Wallah - POS & Dashboard</title>
+    
+    <!-- PWA / Mobile App Settings -->
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#D4AF37">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Grand Chai Wallah">
+
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700;800;900&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            gold: '#D4AF37',
+                            amber: '#FFC107',
+                            lightgold: '#F3E5AB',
+                            dark: '#0e0b07',
+                            card: '#18130c',
+                            border: '#332612',
+                            accent: '#281c0c',
+                        }
+                    },
+                    fontFamily: {
+                        cinzel: ['Cinzel', 'serif'],
+                        sans: ['Plus Jakarta Sans', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: #0e0b07; }
+        ::-webkit-scrollbar-thumb { background: #332612; border-radius: 9999px; }
+        ::-webkit-scrollbar-thumb:hover { background: #D4AF37; }
+
+        @media print {
+            body * { visibility: hidden; }
+            #printableReceipt, #printableReceipt * { visibility: visible; }
+            #printableReceipt {
+                position: absolute; left: 0; top: 0; width: 100%;
+                background: white; color: black; padding: 20px;
+            }
+        }
+    </style>
+</head>
+<body class="h-full text-slate-100 font-sans antialiased flex flex-col bg-[#0b0805] selection:bg-brand-gold selection:text-black">
+
+    <header class="bg-[#140f09] border-b border-brand-border/60 sticky top-0 z-30 shadow-lg">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-16 sm:h-20">
+                <div class="flex items-center space-x-3">
+                    <div class="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-gradient-to-br from-brand-amber via-brand-gold to-yellow-600 flex items-center justify-center shadow-lg shadow-brand-gold/20 text-black">
+                        <i data-lucide="coffee" class="w-6 h-6 sm:w-7 sm:h-7 stroke-[2.5]"></i>
+                    </div>
+                    <div>
+                        <div class="flex items-center gap-1.5">
+                            <i data-lucide="crown" class="w-3.5 h-3.5 text-brand-amber"></i>
+                            <span class="text-xs uppercase tracking-widest font-semibold text-brand-gold/80">রাজকীয় স্বাদ, প্রতিটি কাপে</span>
+                        </div>
+                        <h1 class="font-cinzel text-lg sm:text-2xl font-bold tracking-wider text-transparent bg-clip-text bg-gradient-to-r from-amber-200 via-brand-gold to-yellow-500">
+                            GRAND CHAI WALLAH
+                        </h1>
+                    </div>
+                </div>
+
+                <div class="flex items-center space-x-2 sm:space-x-3">
+                    <button id="navBillingBtn" onclick="switchTab('billing')" class="px-3 py-2 sm:px-4 sm:py-2.5 rounded-xl font-medium text-xs sm:text-sm flex items-center gap-2 transition-all bg-gradient-to-r from-brand-gold to-amber-500 text-black font-semibold shadow-md shadow-brand-gold/20">
+                        <i data-lucide="shopping-bag" class="w-4 h-4"></i>
+                        <span class="hidden sm:inline">POS & Billing</span>
+                        <span class="sm:hidden">POS</span>
+                    </button>
+                    <button id="navDashboardBtn" onclick="switchTab('dashboard')" class="px-3 py-2 sm:px-4 sm:py-2.5 rounded-xl font-medium text-xs sm:text-sm flex items-center gap-2 transition-all bg-brand-card hover:bg-brand-accent text-slate-300 border border-brand-border/50">
+                        <i data-lucide="bar-chart-3" class="w-4 h-4 text-brand-gold"></i>
+                        <span class="hidden sm:inline">Live Dashboard</span>
+                        <span class="sm:hidden">Stats</span>
+                    </button>
+                    <button id="navSocialsBtn" onclick="switchTab('socials')" class="px-3 py-2 sm:px-4 sm:py-2.5 rounded-xl font-medium text-xs sm:text-sm flex items-center gap-2 transition-all bg-brand-card hover:bg-brand-accent text-slate-300 border border-brand-border/50">
+                        <i data-lucide="share-2" class="w-4 h-4 text-rose-400"></i>
+                        <span class="hidden sm:inline">Socials & Promos</span>
+                        <span class="sm:hidden">Socials</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <main class="flex-1 max-w-7xl w-full mx-auto p-3 sm:p-6 flex flex-col gap-6">
+
+        <!-- BILLING VIEW -->
+        <div id="billingView" class="grid grid-cols-1 lg:grid-cols-12 gap-6 h-full">
+            <div class="lg:col-span-7 xl:col-span-8 flex flex-col gap-4">
+                <div class="bg-brand-card p-4 rounded-2xl border border-brand-border/60 shadow-md flex flex-col sm:flex-row gap-3 items-center justify-between">
+                    <div class="relative w-full sm:w-72">
+                        <i data-lucide="search" class="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-amber-500/70"></i>
+                        <input type="text" id="menuSearch" oninput="renderMenu()" placeholder="Search chai, snacks, coffee..." class="w-full bg-[#0e0b07] border border-brand-border/60 rounded-xl pl-10 pr-4 py-2 text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:border-brand-gold transition-colors">
+                    </div>
+                    <div class="text-xs text-amber-400/80 font-medium flex items-center gap-2 self-end sm:self-center">
+                        <span class="inline-block w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                        <span>All Prices Inclusive of Taxes</span>
+                    </div>
+                </div>
+
+                <div id="categoryTabs" class="flex gap-2 overflow-x-auto pb-2 scrollbar-none"></div>
+                <div id="menuGrid" class="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-4 gap-3.5 overflow-y-auto max-h-[calc(100vh-280px)] pr-1"></div>
+            </div>
+
+            <div class="lg:col-span-5 xl:col-span-4 flex flex-col bg-brand-card border border-brand-border/80 rounded-2xl p-4 sm:p-5 shadow-xl">
+                <div class="flex items-center justify-between pb-3 border-b border-brand-border/60">
+                    <div class="flex items-center gap-2">
+                        <i data-lucide="receipt" class="w-5 h-5 text-brand-gold"></i>
+                        <h2 class="font-bold text-lg text-slate-100">Current Order</h2>
+                    </div>
+                    <button onclick="clearCart()" class="text-xs text-rose-400 hover:text-rose-300 font-medium px-2 py-1 rounded-md hover:bg-rose-950/30 transition-colors">
+                        Clear Order
+                    </button>
+                </div>
+
+                <div class="py-3 border-b border-brand-border/60 space-y-2.5">
+                    <div>
+                        <label class="block text-xs text-amber-200/80 font-medium mb-1">Customer Name *</label>
+                        <div class="relative">
+                            <i data-lucide="user" class="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-500"></i>
+                            <input type="text" id="custName" placeholder="Enter name" class="w-full bg-[#0e0b07] border border-brand-border/60 rounded-lg pl-9 pr-3 py-1.5 text-sm text-slate-100 focus:outline-none focus:border-brand-gold">
+                        </div>
+                    </div>
+                    <div>
+                        <label class="block text-xs text-amber-200/80 font-medium mb-1">Mobile / WhatsApp No. *</label>
+                        <div class="relative">
+                            <span class="absolute left-3 top-1/2 -translate-y-1/2 text-xs font-semibold text-slate-500">+91</span>
+                            <input type="tel" id="custPhone" maxlength="10" placeholder="10-digit number" class="w-full bg-[#0e0b07] border border-brand-border/60 rounded-lg pl-11 pr-3 py-1.5 text-sm text-slate-100 focus:outline-none focus:border-brand-gold">
+                        </div>
+                    </div>
+                </div>
+
+                <div id="cartItemsList" class="flex-1 overflow-y-auto py-3 space-y-2 min-h-[160px] max-h-[220px] divide-y divide-brand-border/30"></div>
+
+                <div class="pt-3 border-t border-brand-border/60 space-y-3">
+                    <div class="space-y-1.5 text-sm">
+                        <div class="flex justify-between text-slate-400">
+                            <span>Subtotal</span>
+                            <span id="cartSubtotal" class="text-slate-200 font-semibold">₹0.00</span>
+                        </div>
+                        <div class="flex justify-between text-slate-400 text-xs">
+                            <span>GST / Taxes</span>
+                            <span class="text-emerald-400">₹0.00 (Inclusive)</span>
+                        </div>
+                        <div class="flex justify-between text-base font-bold text-slate-100 pt-1 border-t border-brand-border/40">
+                            <span>Total Payable</span>
+                            <span id="cartTotal" class="text-xl text-brand-gold">₹0</span>
+                        </div>
+                    </div>
+
+                    <div>
+                        <label class="block text-xs text-slate-400 font-medium mb-1">Payment Method</label>
+                        <div class="grid grid-cols-3 gap-2">
+                            <label class="cursor-pointer">
+                                <input type="radio" name="payMethod" value="Cash" checked class="peer sr-only">
+                                <div class="text-center py-1.5 text-xs rounded-lg border border-brand-border bg-[#0e0b07] peer-checked:bg-amber-500/20 peer-checked:border-brand-gold peer-checked:text-brand-gold">Cash</div>
+                            </label>
+                            <label class="cursor-pointer">
+                                <input type="radio" name="payMethod" value="UPI" class="peer sr-only">
+                                <div class="text-center py-1.5 text-xs rounded-lg border border-brand-border bg-[#0e0b07] peer-checked:bg-amber-500/20 peer-checked:border-brand-gold peer-checked:text-brand-gold">UPI / QR</div>
+                            </label>
+                            <label class="cursor-pointer">
+                                <input type="radio" name="payMethod" value="Card" class="peer sr-only">
+                                <div class="text-center py-1.5 text-xs rounded-lg border border-brand-border bg-[#0e0b07] peer-checked:bg-amber-500/20 peer-checked:border-brand-gold peer-checked:text-brand-gold">Card</div>
+                            </label>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-2 pt-1">
+                        <button onclick="processOrder(true)" class="w-full py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl font-semibold text-xs sm:text-sm flex items-center justify-center gap-1.5">
+                            <i data-lucide="message-square" class="w-4 h-4"></i>
+                            <span>WhatsApp Bill</span>
+                        </button>
+                        <button onclick="processOrder(false)" class="w-full py-2.5 bg-gradient-to-r from-brand-gold to-amber-500 text-black rounded-xl font-bold text-xs sm:text-sm flex items-center justify-center gap-1.5">
+                            <i data-lucide="printer" class="w-4 h-4"></i>
+                            <span>Print / Save</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- DASHBOARD VIEW -->
+        <div id="dashboardView" class="hidden flex-col gap-6">
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                <div class="bg-brand-card border border-brand-border/60 p-4 rounded-2xl flex items-center gap-4">
+                    <div class="w-12 h-12 rounded-xl bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center text-emerald-400">
+                        <i data-lucide="indian-rupee" class="w-6 h-6"></i>
+                    </div>
+                    <div>
+                        <p class="text-xs font-medium text-slate-400 uppercase">Total Sales Today</p>
+                        <h3 id="statTotalSales" class="text-2xl font-bold text-emerald-400 mt-0.5">₹0</h3>
+                    </div>
+                </div>
+
+                <div class="bg-brand-card border border-brand-border/60 p-4 rounded-2xl flex items-center gap-4">
+                    <div class="w-12 h-12 rounded-xl bg-amber-500/10 border border-amber-500/30 flex items-center justify-center text-brand-gold">
+                        <i data-lucide="users" class="w-6 h-6"></i>
+                    </div>
+                    <div>
+                        <p class="text-xs font-medium text-slate-400 uppercase">Visits</p>
+                        <h3 id="statTotalCustomers" class="text-2xl font-bold text-slate-100 mt-0.5">0</h3>
+                    </div>
+                </div>
+
+                <div class="bg-brand-card border border-brand-border/60 p-4 rounded-2xl flex items-center gap-4">
+                    <div class="w-12 h-12 rounded-xl bg-sky-500/10 border border-sky-500/30 flex items-center justify-center text-sky-400">
+                        <i data-lucide="cup-soda" class="w-6 h-6"></i>
+                    </div>
+                    <div>
+                        <p class="text-xs font-medium text-slate-400 uppercase">Items Sold</p>
+                        <h3 id="statItemsSold" class="text-2xl font-bold text-slate-100 mt-0.5">0</h3>
+                    </div>
+                </div>
+
+                <div class="bg-brand-card border border-brand-border/60 p-4 rounded-2xl flex items-center gap-4">
+                    <div class="w-12 h-12 rounded-xl bg-purple-500/10 border border-purple-500/30 flex items-center justify-center text-purple-400">
+                        <i data-lucide="flame" class="w-6 h-6"></i>
+                    </div>
+                    <div class="truncate">
+                        <p class="text-xs font-medium text-slate-400 uppercase">Top Seller</p>
+                        <h3 id="statTopItem" class="text-base font-bold text-brand-gold mt-0.5 truncate">None Yet</h3>
+                    </div>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+                <div class="lg:col-span-7 bg-brand-card border border-brand-border/60 rounded-2xl p-5">
+                    <div class="flex items-center justify-between mb-4">
+                        <div class="flex items-center gap-2">
+                            <i data-lucide="zap" class="w-5 h-5 text-amber-400"></i>
+                            <h3 class="font-bold text-lg text-slate-100">Fastest Selling Menu Items</h3>
+                        </div>
+                    </div>
+                    <div id="fastSellingList" class="space-y-3 max-h-[350px] overflow-y-auto pr-1"></div>
+                </div>
+
+                <div class="lg:col-span-5 bg-brand-card border border-brand-border/60 rounded-2xl p-5">
+                    <div class="flex items-center gap-2 mb-4">
+                        <i data-lucide="pie-chart" class="w-5 h-5 text-brand-gold"></i>
+                        <h3 class="font-bold text-lg text-slate-100">Sales by Category</h3>
+                    </div>
+                    <div id="categoryBreakdown" class="space-y-3"></div>
+                </div>
+            </div>
+
+            <div class="bg-brand-card border border-brand-border/60 rounded-2xl p-5 shadow-lg">
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="font-bold text-lg text-slate-100">Today's Orders History</h3>
+                    <button onclick="clearTodayData()" class="px-3 py-1.5 text-xs text-rose-400 border border-rose-900/50 rounded-lg hover:bg-rose-950/40">Reset Data</button>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left text-sm text-slate-300">
+                        <thead class="bg-[#0e0b07] text-xs uppercase text-amber-200/80 border-b border-brand-border/60">
+                            <tr>
+                                <th class="p-3">Time</th>
+                                <th class="p-3">Customer</th>
+                                <th class="p-3">Phone</th>
+                                <th class="p-3">Items</th>
+                                <th class="p-3">Payment</th>
+                                <th class="p-3 text-right">Amount</th>
+                                <th class="p-3 text-center">Re-send</th>
+                            </tr>
+                        </thead>
+                        <tbody id="ordersTableBody" class="divide-y divide-brand-border/30"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- SOCIALS VIEW -->
+        <div id="socialsView" class="hidden flex-col gap-6">
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div class="bg-gradient-to-br from-[#1a0808] to-brand-card border border-rose-900/50 p-6 rounded-2xl flex flex-col justify-between">
+                    <div>
+                        <span class="text-xs font-bold uppercase text-rose-400">YouTube</span>
+                        <h3 class="text-xl font-bold text-slate-100">@GrandChaiWallah</h3>
+                    </div>
+                    <a href="https://youtube.com/@GrandChaiWallah" target="_blank" class="mt-4 px-4 py-2 bg-rose-600 text-white rounded-xl text-xs font-bold text-center">Visit YouTube</a>
+                </div>
+                <div class="bg-gradient-to-br from-[#1c0816] to-brand-card border border-pink-900/50 p-6 rounded-2xl flex flex-col justify-between">
+                    <div>
+                        <span class="text-xs font-bold uppercase text-pink-400">Instagram</span>
+                        <h3 class="text-xl font-bold text-slate-100">@GrandChaiWallah</h3>
+                    </div>
+                    <a href="https://instagram.com/GrandChaiWallah" target="_blank" class="mt-4 px-4 py-2 bg-pink-600 text-white rounded-xl text-xs font-bold text-center">Visit Instagram</a>
+                </div>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- Hidden Receipt Print View -->
+    <div id="printableReceipt" class="hidden">
+        <div style="text-align: center; margin-bottom: 10px;">
+            <h1 style="font-size: 18px; font-weight: bold; margin: 0;">GRAND CHAI WALLAH</h1>
+            <p style="font-size: 11px; margin: 2px 0;">রাজকীয় স্বাদ, প্রতিটি কাপে</p>
+            <p style="font-size: 11px;">Phone: 8013190787</p>
+            <hr style="border: 1px dashed #999; margin: 8px 0;">
+        </div>
+        <div style="font-size: 12px;">
+            <p>Customer: <span id="printCustName"></span></p>
+            <p>Phone: <span id="printCustPhone"></span></p>
+            <p>Date: <span id="printDate"></span></p>
+        </div>
+        <hr style="border: 1px dashed #999; margin: 8px 0;">
+        <table style="width: 100%; font-size: 12px;"><tbody id="printItemsTable"></tbody></table>
+        <hr style="border: 1px dashed #999; margin: 8px 0;">
+        <div style="text-align: right; font-size: 14px; font-weight: bold;">Total: ₹<span id="printTotal"></span></div>
+    </div>
+
+    <!-- Notification Toast -->
+    <div id="toast" class="fixed bottom-5 right-5 z-50 transform translate-y-20 opacity-0 transition-all duration-300 bg-brand-card border border-brand-gold text-slate-100 px-4 py-3 rounded-xl shadow-2xl flex items-center gap-3">
+        <i data-lucide="check-circle" class="w-5 h-5 text-emerald-400" id="toastIcon"></i>
+        <span id="toastMsg" class="text-sm font-medium">Notification</span>
+    </div>
+
+    <script>
+        const MENU_DATA = [
+            { id: 101, name: 'Kulhar Tea', price: 20, category: 'Chai & Tea', icon: 'coffee' },
+            { id: 102, name: 'Masala Tea', price: 25, category: 'Chai & Tea', icon: 'coffee' },
+            { id: 103, name: 'Ginger Tea', price: 20, category: 'Chai & Tea', icon: 'coffee' },
+            { id: 104, name: 'Elachi Tea', price: 20, category: 'Chai & Tea', icon: 'coffee' },
+            { id: 105, name: 'Ginger Elachi Tea', price: 25, category: 'Chai & Tea', icon: 'coffee' },
+            { id: 106, name: 'Lemon Tea', price: 25, category: 'Chai & Tea', icon: 'coffee' },
+            { id: 107, name: 'Green Tea', price: 30, category: 'Chai & Tea', icon: 'coffee' },
+            { id: 108, name: 'Kashmiri Kahwa', price: 50, category: 'Chai & Tea', icon: 'coffee' },
+            { id: 109, name: 'Gur Wali Chai', price: 35, category: 'Chai & Tea', icon: 'coffee' },
+            { id: 110, name: 'Kesar Elaichi Chai', price: 50, category: 'Chai & Tea', icon: 'coffee' },
+            { id: 111, name: 'Chocolate Chai', price: 40, category: 'Chai & Tea', icon: 'coffee' },
+            { id: 112, name: 'Paan Chai', price: 40, category: 'Chai & Tea', icon: 'coffee' },
+            { id: 201, name: 'Hot Coffee', price: 20, category: 'Coffee', icon: 'cup-soda' },
+            { id: 202, name: 'Cold Coffee', price: 50, category: 'Coffee', icon: 'cup-soda' },
+            { id: 203, name: 'Cold Coffee + Ice Cream', price: 80, category: 'Coffee', icon: 'cup-soda' },
+            { id: 301, name: 'Veg Sandwich (2 pc)', price: 30, category: 'Chai Ke Saath', icon: 'sandwich' },
+            { id: 302, name: 'Cheese Sandwich (2 pc)', price: 60, category: 'Chai Ke Saath', icon: 'sandwich' },
+            { id: 401, name: 'French Fries (1 plate)', price: 50, category: 'Quick Bites', icon: 'utensils' },
+            { id: 402, name: 'Samosa', price: 15, category: 'Quick Bites', icon: 'utensils' },
+            { id: 403, name: 'Grand Chai Wallah Special Samosa', price: 20, category: 'Quick Bites', icon: 'sparkles' },
+            { id: 404, name: 'Samosa + Chai Combo', price: 35, category: 'Quick Bites', icon: 'sparkles' },
+            { id: 501, name: 'Veg Noodles', price: 30, category: 'Noodles', icon: 'utensils' },
+            { id: 502, name: 'Veg Cheese Noodles', price: 50, category: 'Noodles', icon: 'utensils' },
+            { id: 503, name: 'Special Grand Chai Wallah Noodles', price: 60, category: 'Noodles', icon: 'star' },
+            { id: 601, name: 'Cold Drink (300 ml)', price: 30, category: 'Cold Drinks & Water', icon: 'glass-water' },
+            { id: 602, name: 'Water (500 ml)', price: 10, category: 'Cold Drinks & Water', icon: 'droplet' }
+        ];
+
+        const CATEGORIES = ['All', 'Chai & Tea', 'Coffee', 'Chai Ke Saath', 'Quick Bites', 'Noodles', 'Cold Drinks & Water'];
+        let selectedCategory = 'All';
+        let cart = [];
+        let orders = [];
+
+        window.addEventListener('DOMContentLoaded', () => {
+            loadStoredOrders();
+            renderCategoryTabs();
+            renderMenu();
+            renderCart();
+            updateDashboardStats();
+            lucide.createIcons();
+
+            if ('serviceWorker' in navigator) {
+                navigator.serviceWorker.register('sw.js');
+            }
+        });
+
+        function switchTab(tab) {
+            document.getElementById('billingView').classList.add('hidden');
+            document.getElementById('dashboardView').classList.add('hidden');
+            document.getElementById('socialsView').classList.add('hidden');
+
+            const inactive = "px-3 py-2 sm:px-4 sm:py-2.5 rounded-xl font-medium text-xs sm:text-sm flex items-center gap-2 transition-all bg-brand-card hover:bg-brand-accent text-slate-300 border border-brand-border/50";
+            const active = "px-3 py-2 sm:px-4 sm:py-2.5 rounded-xl font-medium text-xs sm:text-sm flex items-center gap-2 transition-all bg-gradient-to-r from-brand-gold to-amber-500 text-black font-semibold shadow-md shadow-brand-gold/20";
+
+            document.getElementById('navBillingBtn').className = inactive;
+            document.getElementById('navDashboardBtn').className = inactive;
+            document.getElementById('navSocialsBtn').className = inactive;
+
+            if (tab === 'billing') {
+                document.getElementById('billingView').classList.remove('hidden');
+                document.getElementById('navBillingBtn').className = active;
+            } else if (tab === 'dashboard') {
+                document.getElementById('dashboardView').classList.remove('hidden');
+                document.getElementById('dashboardView').classList.add('flex');
+                document.getElementById('navDashboardBtn').className = active;
+                updateDashboardStats();
+            } else if (tab === 'socials') {
+                document.getElementById('socialsView').classList.remove('hidden');
+                document.getElementById('socialsView').classList.add('flex');
+                document.getElementById('navSocialsBtn').className = active;
+            }
+        }
+
+        function renderCategoryTabs() {
+            document.getElementById('categoryTabs').innerHTML = CATEGORIES.map(cat => `
+                <button onclick="setCategory('${cat}')" class="whitespace-nowrap px-4 py-2 rounded-xl text-xs sm:text-sm font-semibold transition-all ${
+                    selectedCategory === cat ? 'bg-amber-500/20 text-brand-gold border border-brand-gold' : 'bg-brand-card text-slate-400 border border-brand-border/40'
+                }">${cat}</button>
+            `).join('');
+        }
+
+        function setCategory(cat) {
+            selectedCategory = cat;
+            renderCategoryTabs();
+            renderMenu();
+        }
+
+        function renderMenu() {
+            const query = document.getElementById('menuSearch').value.toLowerCase();
+            const filtered = MENU_DATA.filter(item => (selectedCategory === 'All' || item.category === selectedCategory) && item.name.toLowerCase().includes(query));
+            
+            document.getElementById('menuGrid').innerHTML = filtered.map(item => `
+                <div onclick="addToCart(${item.id})" class="bg-brand-card hover:bg-[#20180f] border border-brand-border/60 hover:border-brand-gold/80 rounded-2xl p-3 sm:p-4 cursor-pointer flex flex-col justify-between">
+                    <div>
+                        <div class="flex items-center justify-between mb-2">
+                            <span class="text-[10px] text-amber-500/80 px-2 py-0.5 rounded bg-amber-950/40">${item.category}</span>
+                            <i data-lucide="${item.icon}" class="w-4 h-4 text-brand-gold/70"></i>
+                        </div>
+                        <h3 class="font-bold text-sm text-slate-100">${item.name}</h3>
+                    </div>
+                    <div class="mt-3 flex items-center justify-between pt-2 border-t border-brand-border/30">
+                        <span class="font-extrabold text-base text-amber-400">₹${item.price}</span>
+                        <span class="w-7 h-7 rounded-lg bg-amber-500/10 text-brand-gold flex items-center justify-center">+</span>
+                    </div>
+                </div>
+            `).join('');
+            lucide.createIcons();
+        }
+
+        function addToCart(itemId) {
+            const item = MENU_DATA.find(i => i.id === itemId);
+            const found = cart.find(c => c.item.id === itemId);
+            if (found) found.qty++; else cart.push({ item, qty: 1 });
+            renderCart();
+        }
+
+        function updateQty(itemId, delta) {
+            const idx = cart.findIndex(c => c.item.id === itemId);
+            if (idx > -1) {
+                cart[idx].qty += delta;
+                if (cart[idx].qty <= 0) cart.splice(idx, 1);
+            }
+            renderCart();
+        }
+
+        function clearCart() { cart = []; renderCart(); }
+
+        function calculateTotal() { return cart.reduce((sum, c) => sum + (c.item.price * c.qty), 0); }
+
+        function renderCart() {
+            const container = document.getElementById('cartItemsList');
+            if (cart.length === 0) {
+                container.innerHTML = `<div class="h-full flex items-center justify-center text-slate-500 text-xs py-8">Cart is empty</div>`;
+            } else {
+                container.innerHTML = cart.map(c => `
+                    <div class="flex items-center justify-between py-2 gap-2">
+                        <div class="flex-1">
+                            <h4 class="text-xs font-semibold text-slate-200">${c.item.name}</h4>
+                            <p class="text-[11px] text-amber-400">₹${c.item.price} × ${c.qty} = ₹${c.item.price * c.qty}</p>
+                        </div>
+                        <div class="flex items-center gap-1.5 bg-[#0e0b07] border border-brand-border/60 rounded-lg p-1">
+                            <button onclick="updateQty(${c.item.id}, -1)" class="w-5 h-5 text-slate-400 hover:text-rose-400 font-bold text-xs">-</button>
+                            <span class="text-xs font-bold w-4 text-center text-slate-200">${c.qty}</span>
+                            <button onclick="updateQty(${c.item.id}, 1)" class="w-5 h-5 text-slate-400 hover:text-emerald-400 font-bold text-xs">+</button>
+                        </div>
+                    </div>
+                `).join('');
+            }
+            const total = calculateTotal();
+            document.getElementById('cartSubtotal').innerText = `₹${total}.00`;
+            document.getElementById('cartTotal').innerText = `₹${total}`;
+        }
+
+        function processOrder(sendWhatsApp = false) {
+            const name = document.getElementById('custName').value.trim();
+            const phone = document.getElementById('custPhone').value.trim();
+            const payMethod = document.querySelector('input[name="payMethod"]:checked').value;
+
+            if (!name || phone.length < 10 || cart.length === 0) {
+                showToast('Please check name, 10-digit phone, and cart items', 'error');
+                return;
+            }
+
+            const order = {
+                id: 'GCW-' + Date.now().toString().slice(-6),
+                customer: name,
+                phone: phone,
+                items: [...cart],
+                total: calculateTotal(),
+                paymentMethod: payMethod,
+                timestamp: new Date().toISOString()
+            };
+
+            orders.unshift(order);
+            saveOrdersToStorage();
+
+            if (sendWhatsApp) generateWhatsAppLink(order);
+            else triggerReceiptPrint(order);
+
+            clearCart();
+            document.getElementById('custName').value = '';
+            document.getElementById('custPhone').value = '';
+            updateDashboardStats();
+            showToast('Order saved successfully!');
+        }
+
+        function generateWhatsAppLink(order) {
+            const items = order.items.map(i => `• ${i.item.name} x${i.qty} - ₹${i.item.price * i.qty}`).join('\n');
+            const msg = `☕ *GRAND CHAI WALLAH*\nDear *${order.customer}*, here is your bill:\n\n*Order:* ${order.id}\n*Total:* ₹${order.total}\n*Payment:* ${order.paymentMethod}\n\n*Items:*\n${items}\n\nThank you for visiting! ✨\n📞 8013190787`;
+            window.open(`https://wa.me/91${order.phone.replace(/\\D/g, '')}?text=${encodeURIComponent(msg)}`, '_blank');
+        }
+
+        function triggerReceiptPrint(order) {
+            document.getElementById('printCustName').innerText = order.customer;
+            document.getElementById('printCustPhone').innerText = order.phone;
+            document.getElementById('printDate').innerText = new Date(order.timestamp).toLocaleString('en-IN');
+            document.getElementById('printTotal').innerText = order.total;
+            document.getElementById('printItemsTable').innerHTML = order.items.map(i => `
+                <tr><td>${i.item.name}</td><td style="text-align:center;">${i.qty}</td><td style="text-align:right;">₹${i.item.price * i.qty}</td></tr>
+            `).join('');
+            window.print();
+        }
+
+        function saveOrdersToStorage() { localStorage.setItem('gcw_orders', JSON.stringify(orders)); }
+        function loadStoredOrders() { orders = JSON.parse(localStorage.getItem('gcw_orders') || '[]'); }
+        function clearTodayData() { if (confirm('Clear today\'s data?')) { orders = []; saveOrdersToStorage(); updateDashboardStats(); } }
+
+        function updateDashboardStats() {
+            const total = orders.reduce((sum, o) => sum + o.total, 0);
+            document.getElementById('statTotalSales').innerText = `₹${total}`;
+            document.getElementById('statTotalCustomers').innerText = orders.length;
+
+            let soldCount = 0;
+            const itemMap = {};
+            const catMap = {};
+
+            orders.forEach(o => o.items.forEach(i => {
+                soldCount += i.qty;
+                itemMap[i.item.name] = (itemMap[i.item.name] || 0) + i.qty;
+                catMap[i.item.category] = (catMap[i.item.category] || 0) + (i.item.price * i.qty);
+            }));
+
+            document.getElementById('statItemsSold').innerText = soldCount;
+            const top = Object.entries(itemMap).sort((a,b) => b[1]-a[1])[0];
+            document.getElementById('statTopItem').innerText = top ? `${top[0]} (${top[1]})` : 'None';
+
+            document.getElementById('ordersTableBody').innerHTML = orders.map(o => `
+                <tr class="hover:bg-brand-accent/40">
+                    <td class="p-3 text-xs text-slate-400">${new Date(o.timestamp).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</td>
+                    <td class="p-3 font-medium">${o.customer}</td>
+                    <td class="p-3 text-xs">+91 ${o.phone}</td>
+                    <td class="p-3 text-xs truncate max-w-[150px]">${o.items.map(i => i.item.name).join(', ')}</td>
+                    <td class="p-3 text-xs text-amber-400">${o.paymentMethod}</td>
+                    <td class="p-3 text-right font-bold text-amber-400">₹${o.total}</td>
+                    <td class="p-3 text-center"><button onclick="generateWhatsAppLink(orders.find(x => x.id === '${o.id}'))" class="text-emerald-400 font-bold">WA</button></td>
+                </tr>
+            `).join('');
+            lucide.createIcons();
+        }
+
+        function showToast(msg, type = 'success') {
+            const toast = document.getElementById('toast');
+            document.getElementById('toastMsg').innerText = msg;
+            toast.classList.remove('translate-y-20', 'opacity-0');
+            setTimeout(() => toast.classList.add('translate-y-20', 'opacity-0'), 3000);
+        }
+    </script>
+</body>
+</html>
